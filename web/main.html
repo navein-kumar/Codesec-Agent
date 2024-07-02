@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Codesec Agent</title>
+    <meta name="theme-color" content="#1e1f22">
+      <link rel="icon" type="image/x-icon" href="favicon.png">
+    <!-- Include the Eel JavaScript library -->
+    <script type="text/javascript" src="eel.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+    <style>
+        /* Optional: Center the content vertically and horizontally */
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1e1f22;
+            color: aliceblue;
+        }
+        .eel-app {
+            text-align: center;
+        }
+        .hidden {
+            display: none;  /* Hide by default */
+        }
+        .visible {
+            display: block;  /* Show when needed */
+        }
+
+        button {
+            padding: 16px 33px;
+            border-radius: 9px;
+            background: royalblue;
+            border: none;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.4s;
+            color: aliceblue;
+        }
+
+        button:hover {
+            box-shadow: 7px 5px 56px -14px #1e69e1;
+        }
+
+        button:active {
+            transform: scale(0.97);
+            box-shadow: 7px 5px 56px -10px #1e69e1;
+        }
+
+        .input-container {
+            height: 50px;
+            position: relative;
+            width: 100%;
+        }
+
+        .ic1 {
+            margin-top: 40px;
+        }
+
+        .ic2 {
+            margin-top: 30px;
+        }
+
+        .input {
+            background-color: #303245;
+            border-radius: 12px;
+            border: 0;
+            box-sizing: border-box;
+            color: #eee;
+            font-size: 18px;
+            height: 100%;
+            outline: 0;
+            padding: 4px 20px 0;
+            width: 100%;
+        }
+
+        .cut {
+            background-color: #1e1f22;
+            border-radius: 10px;
+            height: 20px;
+            left: 20px;
+            position: absolute;
+            top: -20px;
+            transform: translateY(0);
+            transition: transform 200ms;
+            width: 76px;
+        }
+
+        .input:focus ~ .cut, .input:not(:placeholder-shown) ~ .cut {
+            transform: translateY(8px);
+        }
+
+        .placeholder {
+            color: #65657b;
+            font-family: sans-serif;
+            left: 20px;
+            line-height: 14px;
+            pointer-events: none;
+            position: absolute;
+            transform-origin: 0 50%;
+            transition: transform 200ms, color 200ms;
+            top: 20px;
+        }
+
+        .input:focus ~ .placeholder, .input:not(:placeholder-shown) ~ .placeholder {
+            transform: translateY(-30px) translateX(10px) scale(0.75);
+        }
+
+        .input:not(:placeholder-shown) ~ .placeholder {
+            color: #808097;
+        }
+
+        .input:focus ~ .placeholder {
+            color: #dc2f55;
+        }
+
+        img {
+            -webkit-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+    </style>
+    <script type="text/javascript">
+      function disableselect(e){
+      return false
+      }
+
+      function reEnable(){
+      return true
+      }
+
+      //if IE4+
+      document.onselectstart=new Function ("return false")
+      document.oncontextmenu=new Function ("return false")
+      //if NS6
+      if (window.sidebar){
+      document.onmousedown=disableselect
+      document.onclick=reEnable
+      }
+      </script>
+</head>
+<body>
+    <div id="installPage" class="eel-app visible">
+        <h1 style="cursor: default; color: aliceblue">WinPcap Driver Required!</h1>
+        <p style="color: antiquewhite;">Please install WinPcap Driver to continue.</p>
+        <button style="margin-right: 5px;" onclick="installWinPcap()">Install WinPcap</button>
+        <button style="margin-left: 5px;" onclick="checkWinPcap()">Check WinPcap Installation</button>
+
+        <span style="display: block; position:relative; margin-top: 20px;">
+            <div style="color: aliceblue; cursor: default;">Made by:</div>
+            <img src="codesec.png" width="100" style="margin: auto;" alt="Codesec Logo">
+        </span>
+        <p style="color: aliceblue; cursor: default;">© Copyright Codesecure Solutions</p>
+    </div>
+
+    <div id="monitorPage" class="eel-app hidden" style="text-align: left; padding-right: 10px; padding-left: 10px;">
+        <h1 style="text-align: center; cursor: default">Monitor Configuration</h1>
+        <div class="input-container ic1">
+            <input id="interfaceValue" class="input" type="text" placeholder=" " />
+            <div class="cut"></div>
+            <label for="interfaceValue" class="placeholder">Interface</label>
+        </div>
+
+        <div class="input-container ic2">
+            <input id="ipAddress" class="input" type="text" placeholder=" " />
+            <div class="cut"></div>
+            <label for="ipAddress" class="placeholder">IP Address</label>
+        </div>
+
+        <div class="input-container ic2">
+            <input id="portNumber" class="input" type="text" placeholder=" " />
+            <div class="cut" style="width: 86px"></div>
+            <label for="portNumber" class="placeholder">Port Number</label>
+        </div>
+
+        <div class="input-container ic2">
+            <input id="ignoredPorts" class="input" type="text" placeholder=" " />
+            <div class="cut" style="width: 200px"></div>
+            <label for="ignoredPorts" class="placeholder">Ignored Ports (comma-separated)</label>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="startMonitoring()" id="startBtn">Start Monitoring</button>
+            <button onclick="checkService()">Check Service Status</button>
+            <button onclick="deleteService()">Delete service</button>
+            <div style="margin-top: 8px;" id="service_status"></div><br>
+            <div id="ipCheck"></div><br>
+            <div id="interfaces_list" style="padding-right: 10px; padding-left: 10px; text-align: left; cursor: default;">Available interfaces:</div>
+
+            <br>
+            <div style="color: aliceblue; cursor: default;">Made by:</div>
+            <img src="codesec.png" width="100" style="margin: auto;" alt="Codesec Logo">
+            <div style="color: aliceblue; cursor: default;">© Copyright Codesecure Solutions</div>
+        </div>
+    </div>
+
+    <script>
+        // Function to call the Python function check_winpcap
+        function checkWinPcap() {
+            eel.check_winpcap();
+        }
+
+        getInterfaces();
+
+        function getInterfaces() {
+            eel.get_windump_interfaces()().then(function (interfaces){
+                document.getElementById('interfaces_list').innerHTML += "<br>" + interfaces.replaceAll(")",")<br>");
+            });
+        }
+
+        // Function to call the Python function install_winpcap
+        function installWinPcap() {
+            eel.launch_installer();
+        }
+
+        function deleteService() {
+            eel.delete_service();
+        }
+
+        function checkService() {
+            eel.is_service_running()().then(function(status) {
+                document.getElementById('service_status').innerText = "Service status: " + status;
+            });
+        }
+
+        eel.expose(parseValues);
+        function parseValues(interfaceValues, ipAddress, portNumber, ignoredPorts) {
+            document.getElementById('interfaceValue').value = interfaceValues;
+            document.getElementById('ipAddress').value = ipAddress;
+            document.getElementById('portNumber').value = portNumber;
+            document.getElementById('ignoredPorts').value= ignoredPorts;
+        }
+
+        eel.expose(ipValid)
+        function ipValid() {
+            document.getElementById('ipCheck').innerText = "IP address and port number valid!";
+            document.getElementById("startBtn").enabled = true;
+        }
+
+        eel.expose(ipInValid)
+        function ipInValid() {
+            document.getElementById('ipCheck').innerText = "IP Address or port number invalid";
+            document.getElementById("startBtn").enabled = true;
+        }
+
+        // Function to show the monitor page
+        eel.expose(show_monitor_page);
+        function show_monitor_page() {
+            document.getElementById('installPage').classList.remove('visible');
+            document.getElementById('installPage').classList.add('hidden');
+            document.getElementById('monitorPage').classList.remove('hidden');
+            document.getElementById('monitorPage').classList.add('visible');
+        }
+
+        // Function to start monitoring
+        function startMonitoring() {
+            var interfaceValue = document.getElementById('interfaceValue').value;
+            var ipAddress = document.getElementById('ipAddress').value;
+            var portNumber = document.getElementById('portNumber').value;
+            var ignoredPorts = document.getElementById('ignoredPorts').value;
+
+            // Call Python function to start monitoring with inputs
+            if (ignoredPorts.length === 0) {
+                ignoredPorts = portNumber;
+            } else {
+                ignoredPorts = portNumber + "," + document.getElementById('ignoredPorts').value;
+            }
+            eel.check_ip_port(interfaceValue, ipAddress, portNumber, ignoredPorts.replaceAll(" ", ""))();
+            document.getElementById("startBtn").enabled = false;
+        }
+
+        // Expose the alert dialog function to Python
+        eel.expose(show_alert_dialog);
+        function show_alert_dialog(message) {
+            alert(message);
+        }
+
+        function disableF5(e) {
+            if ((e.keyCode === 116) || (e.ctrlKey && e.keyCode === 82)) {
+                e.preventDefault();
+            }
+        }
+
+        if (window.attachEvent) {
+            document.attachEvent('onkeydown', disableF5);
+        } else {
+            document.addEventListener('keydown', disableF5);
+        }
+
+        // Call checkWinPcap when the window has loaded
+        window.onload = function() {
+            checkWinPcap();
+        };
+
+        document.onkeydown = function (e) {
+
+        // disable F12 key
+        if(e.keyCode === 123) {
+            return false;
+        }
+
+        // disable I key
+        if(e.ctrlKey && e.shiftKey && e.keyCode === 73){
+            return false;
+        }
+
+        // disable J key
+        if(e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+            return false;
+        }
+
+        // disable U key
+        if(e.ctrlKey && e.keyCode === 85) {
+            return false;
+        }
+    }
+    </script>
+</body>
+</html>
